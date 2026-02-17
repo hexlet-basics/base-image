@@ -1,0 +1,47 @@
+name: Docker arm64 nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+
+env:
+  REGISTRY_NAME: hexletbasics
+  CI: true
+  IMAGE_NAME: hexletbasics/base-image
+
+jobs:
+  build-arm64-and-publish-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push arm64 image
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest-arm64
+          cache-from: type=gha,scope=base-image
+          cache-to: type=gha,scope=base-image,mode=max
+
+      - name: Publish multi-arch latest manifest
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.IMAGE_NAME }}:latest \
+            ${{ env.IMAGE_NAME }}:latest-amd64 \
+            ${{ env.IMAGE_NAME }}:latest-arm64
+
+      - name: Inspect latest manifest
+        run: docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:latest
