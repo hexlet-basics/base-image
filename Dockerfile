@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
   && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
@@ -21,5 +21,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   git curl zip unzip jq wget make yamllint yq
 
 RUN pnpm install -g ajv-cli
+
+RUN pip install rumdl --break-system-packages
 
 COPY ./common /opt/basics/common
